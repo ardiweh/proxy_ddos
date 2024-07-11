@@ -35,7 +35,7 @@ def detect_ddos(port):
         with lock:
             count = connection_counts[port]
             connection_counts[port] = 0  # Reset count setelah pemeriksaan
-            print("Port: " + str(port), " Connection Count: " + str(connection_counts))
+            print("Port: " + str(port), " Connection Count: " + str(connection_counts[port]))
         if count > threshold:
             print(f"Possible DDoS attack detected on port {port} ({ddos_ports[port]}): {count} connections in the last 10 seconds")
 

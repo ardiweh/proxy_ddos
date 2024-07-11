@@ -190,10 +190,7 @@ def handle_client(client_socket, server_address):
                     packet = IP(data)
                     # Check if it's an HTTP packet and ensure it's TCP
                     if packet.haslayer(TCP) and b'HTTP' in data:
-                        features = extract_features(packet)
-                        if features:
-                            data_list.append(features)
-                            print(f"Extracted features: {features}")
+                        process_packet(packet)
                 except Exception as e:
                     print(f"Error processing packet: {e}")
 

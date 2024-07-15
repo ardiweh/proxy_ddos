@@ -16,7 +16,7 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server
-SERVER_IP = '192.168.1.25'
+SERVER_IP = '192.168.1.129'
 
 captured_packets = []
 packet_count = 0
@@ -59,7 +59,7 @@ def forward_packet(packet):
                 sport=original_udp.sport, dport=original_udp.dport, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
 
-        # Periksa apakah IP tujuan adalah SERVER_IP
+        # Periksa apakah IP tujuan adalah SERVER_IP dan bukan multicast atau broadcast
         if original_ip.dst == SERVER_IP and not is_multicast_or_broadcast(original_ip.dst):
             captured_packets.append(packet)
             packet_count += 1

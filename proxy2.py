@@ -60,7 +60,7 @@ def forward_packet(packet):
             ) / original_udp.payload
 
         # Periksa apakah IP tujuan adalah SERVER_IP
-        if original_ip.dst == SERVER_IP:
+        if original_ip.dst == SERVER_IP and not is_multicast_or_broadcast(original_ip.dst):
             captured_packets.append(packet)
             packet_count += 1
 

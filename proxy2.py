@@ -1,5 +1,5 @@
 from scapy.all import sniff, send, IP, TCP, UDP, wrpcap
-import os  # Tambahkan impor modul os
+import os  # Pastikan impor modul os di sini
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -38,7 +38,7 @@ def forward_packet(packet):
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
             return
-        
+
         if packet.haslayer(TCP):
             original_tcp = packet[TCP]
 

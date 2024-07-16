@@ -1,5 +1,4 @@
 from scapy.all import sniff, send, IP, TCP, UDP, wrpcap
-import os
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -37,7 +36,7 @@ def forward_packet(packet):
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
             return
-        
+
         if packet.haslayer(TCP):
             original_tcp = packet[TCP]
 
@@ -55,7 +54,7 @@ def forward_packet(packet):
 
             if original_udp.dport not in TARGET_PORT:
                 return
-            
+
             new_packet = IP(src=original_ip.src, dst=original_ip.dst) / UDP(
                 sport=original_udp.sport, dport=original_udp.dport, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
@@ -75,8 +74,15 @@ def forward_packet(packet):
                 print(f"Error writing to pcap file: {e}")
 
         if new_packet:
-            send(new_packet, verbose=False)
-            print(f"Forwarded {packet.summary()} from {original_ip.src}:{original_tcp.sport if packet.haslayer(TCP) else original_udp.sport} to {new_packet[IP].dst}:{new_packet[TCP].dport if packet.haslayer(TCP) else new_packet[UDP].dport}")
+            # Cek apakah new_packet tidak mengarah ke IP asli untuk menghindari looping
+            if new_packet[IP].dst != original_ip.src:
+                try:
+                    send(new_packet, verbose=False)
+                    print(f"Forwarded {packet.summary()} from {original_ip.src}:{original_tcp.sport if packet.haslayer(TCP) else original_udp.sport} to {new_packet[IP].dst}:{new_packet[TCP].dport if packet.haslayer(TCP) else new_packet[UDP].dport}")
+                except Exception as e:
+                    print(f"Error forwarding packet: {e}")
+            else:
+                print("Detected potential loop, packet not forwarded.")
 
 # Mulai menangkap dan meneruskan paket
 sniff(filter="tcp or udp", prn=forward_packet)

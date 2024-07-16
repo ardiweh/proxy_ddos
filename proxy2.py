@@ -1,4 +1,5 @@
 from scapy.all import sniff, send, IP, TCP, UDP, wrpcap
+import os
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -65,10 +66,13 @@ def forward_packet(packet):
             packet_count += 1
 
         if packet_count >= 10:
-            wrpcap(f"./log/client_traffic-{cap_increment}.pcap", captured_packets)
-            cap_increment += 1
-            packet_count = 0
-            captured_packets.clear()
+            try:
+                wrpcap(f"./log/client_traffic-{cap_increment}.pcap", captured_packets)
+                cap_increment += 1
+                packet_count = 0
+                captured_packets.clear()
+            except Exception as e:
+                print(f"Error writing to pcap file: {e}")
 
         if new_packet:
             send(new_packet, verbose=False)

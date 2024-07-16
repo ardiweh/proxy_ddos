@@ -1,4 +1,5 @@
 from scapy.all import sniff, send, IP, TCP, UDP, wrpcap
+import os  # Tambahkan impor modul os
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {

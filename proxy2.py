@@ -16,7 +16,8 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server
-SERVER_IP = '192.168.1.129'
+SERVER_IP = '192.168.167.239'
+CAPTURED_PACKET_DIR = "./log"
 
 captured_packets = []
 packet_count = 0
@@ -36,7 +37,7 @@ def forward_packet(packet):
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
             return
-
+        
         if packet.haslayer(TCP):
             original_tcp = packet[TCP]
 
@@ -54,7 +55,7 @@ def forward_packet(packet):
 
             if original_udp.dport not in TARGET_PORT:
                 return
-
+            
             new_packet = IP(src=original_ip.src, dst=original_ip.dst) / UDP(
                 sport=original_udp.sport, dport=original_udp.dport, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
@@ -66,7 +67,10 @@ def forward_packet(packet):
 
         if packet_count >= 10:
             try:
-                wrpcap(f"./log/client_traffic-{cap_increment}.pcap", captured_packets)
+                # Pastikan direktori ada dan memiliki izin menulis
+                if not os.path.exists(CAPTURED_PACKET_DIR):
+                    os.makedirs(CAPTURED_PACKET_DIR)
+                wrpcap(os.path.join(CAPTURED_PACKET_DIR, f"client_traffic-{cap_increment}.pcap"), captured_packets)
                 cap_increment += 1
                 packet_count = 0
                 captured_packets.clear()

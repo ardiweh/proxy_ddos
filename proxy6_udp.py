@@ -20,7 +20,7 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server dan proxy
-SERVER_IP = '192.168.1.8'
+SERVER_IP = '192.168.1.9'
 PROXY_IP = '192.168.1.10'
 CAPTURED_PACKET_DIR = "./log"
 

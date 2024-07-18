@@ -106,8 +106,8 @@ def forward_packet(packet):
             
             packet_info["Protocol"] = "UDP"
             
-            new_packet = IP(src=original_ip.src, dst=original_ip.dst) / UDP(
-                sport=original_udp.sport, dport=original_udp.dport, len=original_udp.len, chksum=original_udp.chksum
+            new_packet = IP(src=original_ip.src, dst=SERVER_IP) / UDP(
+                sport=original_udp.sport, dport=12345, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
 
         # Periksa apakah IP tujuan adalah SERVER_IP dan bukan multicast atau broadcast
@@ -126,6 +126,8 @@ def forward_packet(packet):
                     print(f"Error forwarding packet: {e}")
             else:
                 print("Detected potential loop, packet not forwarded.")
+        else:
+            print("No new packet to forward.")
 
 def write_logs():
     global captured_data, packet_count, cap_increment

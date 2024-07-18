@@ -20,7 +20,7 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server dan proxy
-SERVER_IP = '192.168.1.9'
+SERVER_IP = '192.168.1.8'
 PROXY_IP = '192.168.1.10'
 CAPTURED_PACKET_DIR = "./log"
 
@@ -32,6 +32,10 @@ lock = threading.Lock()
 # Fungsi untuk memeriksa apakah IP adalah multicast atau broadcast
 def is_multicast_or_broadcast(ip):
     return ip.startswith('224.') or ip.startswith('239.') or ip == '255.255.255.255'
+
+# Fungsi untuk memeriksa apakah paket adalah NBNS Query
+def is_nbns_query(packet):
+    return packet.haslayer('NBNSQueryRequest')
 
 def forward_packet(packet):
     global captured_data, packet_count, cap_increment
@@ -49,11 +53,16 @@ def forward_packet(packet):
             print("Ignoring packet from or to proxy itself to prevent loop.")
             return
 
+        # Mengabaikan paket NBNS Query
+        if is_nbns_query(packet):
+            print("Ignoring NBNS Query packet to prevent loop.")
+            return
+
         packet_info = {
-            "Protocol": None,
+            "Protocol": "UDP" if packet.haslayer(UDP) else "TCP" if packet.haslayer(TCP) else None,
             "Packet length": len(packet),
-            "Flow Bytes": len(packet[IP]),  # Misalkan jumlah byte dari paket IP
-            "Flow Packet": 1,               # Misalkan jumlah paket dalam aliran ini
+            "Flow Bytes": len(packet[IP]),  # Jumlah byte dari paket IP
+            "Flow Packet": 1,               # Jumlah paket dalam aliran ini
             "Flow IAT": None,
             "IAT": packet.time,
             "PSH Flags": None,
@@ -72,8 +81,8 @@ def forward_packet(packet):
             "Bytes/Bulk": None,
             "Packets/Bulk": None,
             "Bulk Rate": None,
-            "Subflow Packets": 1,            # Misalkan jumlah subflow packets
-            "Subflow Bytes": len(packet),    # Misalkan jumlah byte subflow
+            "Subflow Packets": 1,            # Jumlah subflow packets
+            "Subflow Bytes": len(packet),    # Jumlah byte subflow
             "Init Win Bytes": None,
             "Active": packet.time,
             "Idle": None
@@ -81,9 +90,6 @@ def forward_packet(packet):
 
         if packet.haslayer(UDP):
             original_udp = packet[UDP]
-
-            packet_info["Protocol"] = "UDP"
-
             new_packet = IP(src=original_ip.src, dst=SERVER_IP) / UDP(
                 sport=original_udp.sport, dport=12345, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
@@ -96,8 +102,11 @@ def forward_packet(packet):
                 print(f"Packet forwarded: {packet.summary()}")
             except Exception as e:
                 print(f"Error forwarding packet: {e}")
-        else:
-            print("No new packet to forward.")
+        
+        # Menyimpan informasi paket ke captured_data
+        with lock:
+            captured_data.append(packet_info)
+            packet_count += 1
 
 def write_logs():
     global captured_data, packet_count, cap_increment
@@ -111,7 +120,13 @@ def write_logs():
                         os.makedirs(CAPTURED_PACKET_DIR)
                     file_path = os.path.join(CAPTURED_PACKET_DIR, f"client_traffic-{cap_increment}.csv")
                     with open(file_path, 'w', newline='') as csvfile:
-                        fieldnames = list(captured_data[0].keys())
+                        fieldnames = [
+                            "Protocol", "Packet length", "Flow Bytes", "Flow Packet", "Flow IAT", "IAT",
+                            "PSH Flags", "URG Flags", "Header Length", "FIN Flag", "SYN Flag", "RST Flag",
+                            "PSH Flag", "ACK Flag", "URG Flag", "CWE Flag", "ECE Flag", "Packet Size",
+                            "Segment Size", "Bytes/Bulk", "Packets/Bulk", "Bulk Rate", "Subflow Packets",
+                            "Subflow Bytes", "Init Win Bytes", "Active", "Idle"
+                        ]
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         writer.writeheader()
                         for data in captured_data:

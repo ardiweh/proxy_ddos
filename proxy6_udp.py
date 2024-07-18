@@ -1,4 +1,4 @@
-from scapy.all import sniff, send, IP, TCP, UDP
+from scapy.all import sniff, send, IP, UDP
 import os
 import threading
 import time
@@ -20,7 +20,7 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server
-SERVER_IP = '192.168.1.8'
+SERVER_IP = '192.168.1.9'
 CAPTURED_PACKET_DIR = "./log"
 
 captured_data = []
@@ -35,6 +35,8 @@ def is_multicast_or_broadcast(ip):
 def forward_packet(packet):
     global captured_data, packet_count, cap_increment
 
+    print(f"Captured packet: {packet.summary()}")
+    
     if packet.haslayer(IP):
         original_ip = packet[IP]
         new_packet = None
@@ -73,37 +75,9 @@ def forward_packet(packet):
             "Idle": None
         }
 
-        if packet.haslayer(TCP):
-            original_tcp = packet[TCP]
-
-            if original_tcp.dport not in TARGET_PORT:
-                return
-
-            packet_info["Protocol"] = "TCP"
-            packet_info["PSH Flags"] = original_tcp.flags & 0x08
-            packet_info["URG Flags"] = original_tcp.flags & 0x20
-            packet_info["Header Length"] = original_tcp.dataofs * 4
-            packet_info["FIN Flag"] = original_tcp.flags & 0x01
-            packet_info["SYN Flag"] = original_tcp.flags & 0x02
-            packet_info["RST Flag"] = original_tcp.flags & 0x04
-            packet_info["PSH Flag"] = original_tcp.flags & 0x08
-            packet_info["ACK Flag"] = original_tcp.flags & 0x10
-            packet_info["URG Flag"] = original_tcp.flags & 0x20
-            packet_info["CWE Flag"] = original_tcp.flags & 0x40
-            packet_info["ECE Flag"] = original_tcp.flags & 0x80
-
-            new_packet = IP(src=original_ip.src, dst=original_ip.dst) / TCP(
-                sport=original_tcp.sport, dport=original_tcp.dport, flags=original_tcp.flags,
-                seq=original_tcp.seq, ack=original_tcp.ack, dataofs=original_tcp.dataofs, reserved=original_tcp.reserved,
-                window=original_tcp.window, chksum=original_tcp.chksum, urgptr=original_tcp.urgptr, options=original_tcp.options
-            ) / original_tcp.payload
-                
-        elif packet.haslayer(UDP):
+        if packet.haslayer(UDP):
             original_udp = packet[UDP]
 
-            if original_udp.dport not in TARGET_PORT:
-                return
-            
             packet_info["Protocol"] = "UDP"
             
             new_packet = IP(src=original_ip.src, dst=SERVER_IP) / UDP(
@@ -111,17 +85,12 @@ def forward_packet(packet):
             ) / original_udp.payload
 
         # Periksa apakah IP tujuan adalah SERVER_IP dan bukan multicast atau broadcast
-        if original_ip.dst == SERVER_IP and not is_multicast_or_broadcast(original_ip.dst):
-            with lock:
-                captured_data.append(packet_info)
-                packet_count += 1
-
         if new_packet:
-            # Cek apakah new_packet tidak mengarah ke IP asli untuk menghindari looping
+            print(f"Forwarding packet from {original_ip.src} to {new_packet[IP].dst}")
             if new_packet[IP].dst != original_ip.src:
                 try:
                     send(new_packet, verbose=False)
-                    print(f"Forwarded {packet.summary()} from {original_ip.src} to {new_packet[IP].dst}")
+                    print(f"Packet forwarded: {packet.summary()}")
                 except Exception as e:
                     print(f"Error forwarding packet: {e}")
             else:
@@ -158,4 +127,4 @@ log_thread.daemon = True
 log_thread.start()
 
 # Mulai menangkap dan meneruskan paket
-sniff(filter="tcp or udp", prn=forward_packet)
+sniff(filter="udp", prn=forward_packet)

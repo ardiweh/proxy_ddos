@@ -46,10 +46,10 @@ def forward_packet(packet):
         packet_info = {
             "Protocol": None,
             "Packet length": len(packet),
-            "Flow Bytes": None,
-            "Flow Packet": None,
+            "Flow Bytes": len(packet[IP]),  # Misalkan jumlah byte dari paket IP
+            "Flow Packet": 1,               # Misalkan jumlah paket dalam aliran ini
             "Flow IAT": None,
-            "IAT": None,
+            "IAT": packet.time,
             "PSH Flags": None,
             "URG Flags": None,
             "Header Length": None,
@@ -61,15 +61,15 @@ def forward_packet(packet):
             "URG Flag": None,
             "CWE Flag": None,
             "ECE Flag": None,
-            "Packet Size": None,
+            "Packet Size": len(packet),
             "Segment Size": None,
             "Bytes/Bulk": None,
             "Packets/Bulk": None,
             "Bulk Rate": None,
-            "Subflow Packets": None,
-            "Subflow Bytes": None,
+            "Subflow Packets": 1,            # Misalkan jumlah subflow packets
+            "Subflow Bytes": len(packet),    # Misalkan jumlah byte subflow
             "Init Win Bytes": None,
-            "Active": None,
+            "Active": packet.time,
             "Idle": None
         }
 

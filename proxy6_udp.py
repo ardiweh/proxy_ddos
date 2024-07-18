@@ -19,8 +19,9 @@ TARGET_PORT = {
     3389  # RDP
 }
 
-# Definisi alamat IP server
+# Definisi alamat IP server dan proxy
 SERVER_IP = '192.168.1.9'
+PROXY_IP = '192.168.1.10'
 CAPTURED_PACKET_DIR = "./log"
 
 captured_data = []
@@ -35,14 +36,16 @@ def is_multicast_or_broadcast(ip):
 def forward_packet(packet):
     global captured_data, packet_count, cap_increment
 
-    print(f"Captured packet: {packet.summary()}")
-    
     if packet.haslayer(IP):
         original_ip = packet[IP]
         new_packet = None
-        
+
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
+            return
+
+        # Cegah loop dengan mengabaikan paket yang berasal dari PROXY_IP
+        if original_ip.src == PROXY_IP:
             return
 
         packet_info = {
@@ -79,7 +82,7 @@ def forward_packet(packet):
             original_udp = packet[UDP]
 
             packet_info["Protocol"] = "UDP"
-            
+
             new_packet = IP(src=original_ip.src, dst=SERVER_IP) / UDP(
                 sport=original_udp.sport, dport=12345, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
@@ -87,14 +90,11 @@ def forward_packet(packet):
         # Periksa apakah IP tujuan adalah SERVER_IP dan bukan multicast atau broadcast
         if new_packet:
             print(f"Forwarding packet from {original_ip.src} to {new_packet[IP].dst}")
-            if new_packet[IP].dst != original_ip.src:
-                try:
-                    send(new_packet, verbose=False)
-                    print(f"Packet forwarded: {packet.summary()}")
-                except Exception as e:
-                    print(f"Error forwarding packet: {e}")
-            else:
-                print("Detected potential loop, packet not forwarded.")
+            try:
+                send(new_packet, verbose=False)
+                print(f"Packet forwarded: {packet.summary()}")
+            except Exception as e:
+                print(f"Error forwarding packet: {e}")
         else:
             print("No new packet to forward.")
 

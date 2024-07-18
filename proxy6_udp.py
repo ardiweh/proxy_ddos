@@ -20,7 +20,7 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server dan proxy
-SERVER_IP = '192.168.1.9'
+SERVER_IP = '192.168.1.8'
 PROXY_IP = '192.168.1.10'
 CAPTURED_PACKET_DIR = "./log"
 
@@ -44,8 +44,9 @@ def forward_packet(packet):
         if is_multicast_or_broadcast(original_ip.dst):
             return
 
-        # Cegah loop dengan mengabaikan paket yang berasal dari PROXY_IP
-        if original_ip.src == PROXY_IP:
+        # Cegah loop dengan mengabaikan paket yang berasal dari PROXY_IP atau ditujukan ke PROXY_IP
+        if original_ip.src == PROXY_IP or original_ip.dst == PROXY_IP:
+            print("Ignoring packet from or to proxy itself to prevent loop.")
             return
 
         packet_info = {

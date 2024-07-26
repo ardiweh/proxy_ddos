@@ -168,6 +168,8 @@ def process_packet(packet):
             send_telegram_message(f"Detected DDoS attack from {packet[IP].src}")
         else:
             print("No DDoS detected.")
+    else:
+        print("Packet does not have IP layer")
 
 # Fungsi untuk menerima paket UDP dan memprosesnya menggunakan Scapy
 def udp_receiver():

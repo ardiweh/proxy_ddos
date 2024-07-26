@@ -1,7 +1,6 @@
-from scapy.all import sniff, IP, TCP, UDP
+from scapy.all import sniff, send, IP, TCP, UDP
 import socket
 import time
-import json
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -31,7 +30,7 @@ def is_multicast_or_broadcast(ip):
 def forward_packet_to_server(metadata):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(json.dumps(metadata).encode('utf-8'), (SERVER_IP, SERVER_PORT))
+        sock.sendto(bytes(str(metadata), 'utf-8'), (SERVER_IP, SERVER_PORT))
         print(f"[INFO] Metadata sent to server: {metadata}")
     except Exception as e:
         print(f"[ERROR] Error sending metadata to server: {e}")
@@ -71,7 +70,7 @@ def extract_metadata(packet):
         "Fwd PSH Flags": 0,
         "Bwd PSH Flags": 0,
         "Fwd URG Flags": 0,
-        "BWD URG Flags": 0,
+        "Bwd URG Flags": 0,
         "Fwd Header Length": 0,
         "Bwd Header Length": 0,
         "Fwd Packets/s": 0,

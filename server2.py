@@ -2,10 +2,10 @@ import socket
 import joblib
 import pandas as pd
 import numpy as np
+from scapy.all import IP, UDP, TCP
 import requests
 from datetime import datetime
 import json
-import time
 
 # Load the trained model, PCA, and scaler
 model = joblib.load('best_random_forest_model.pkl')
@@ -65,48 +65,43 @@ def send_telegram_message(message):
 def process_packet(packet):
     print("Processing packet...")
     try:
-        packet_info = json.loads(packet.decode('utf-8'))
+        packet_info = json.loads(packet)
+        print(f"Packet info: {packet_info}")
+        
+        packet_df = pd.DataFrame([packet_info], columns=feature_names)
+
+        try:
+            packet_scaled = scaler.transform(packet_df)
+            packet_pca = pca.transform(packet_scaled)
+            print("Data transformed successfully.")
+        except Exception as e:
+            print(f"Error in data transformation: {e}")
+            return
+
+        try:
+            prediction = model.predict(packet_pca)
+            print(f"Prediction: {prediction}")
+        except Exception as e:
+            print(f"Error in prediction: {e}")
+            return
+
+        if prediction[0] == 1:
+            current_time = datetime.now().strftime("%a %b %d %H:%M:%S %Y")
+            reason = "Detected anomalous traffic pattern matching DDoS characteristics."
+            message = f"Deteksi serangan DDoS terdeteksi pada {current_time}! Segera periksa sistem Anda.\nReason: {reason}"
+            print(message)
+            send_telegram_message(message)
+        else:
+            print("No DDoS detected.")
     except Exception as e:
         print(f"Error decoding packet: {e}")
-        return
-
-    # Convert 'Protocol' field to numeric value
-    protocol_map = {"UDP": 1, "TCP": 2}
-    packet_info["Protocol"] = protocol_map.get(packet_info["Protocol"], 0)
-
-    print(f"Packet info: {packet_info}")
-    packet_df = pd.DataFrame([packet_info], columns=feature_names)
-
-    try:
-        start_time = time.time()
-        packet_scaled = scaler.transform(packet_df)
-        packet_pca = pca.transform(packet_scaled)
-        prediction = model.predict(packet_pca)
-        end_time = time.time()
-        print(f"Data transformed and prediction made in {end_time - start_time:.4f} seconds.")
-        print(f"Prediction: {prediction}")
-    except Exception as e:
-        print(f"Error in data transformation or prediction: {e}")
-        return
-
-    if prediction[0] == 1:
-        current_time = datetime.now().strftime("%a %b %d %H:%M:%S %Y")
-        reason = "Detected anomalous traffic pattern matching DDoS characteristics."
-        message = f"Deteksi serangan DDoS terdeteksi pada {current_time}! Segera periksa sistem Anda.\nReason: {reason}"
-        print(message)
-        send_telegram_message(message)
-    else:
-        print("No DDoS detected.")
 
 # Fungsi untuk menerima paket UDP dan memprosesnya menggunakan Scapy
 def udp_receiver():
     while True:
-        try:
-            data, addr = sock.recvfrom(65535)
-            print(f"Received packet from {addr}")
-            process_packet(data)
-        except Exception as e:
-            print(f"Error receiving packet: {e}")
+        data, addr = sock.recvfrom(65535)
+        print(f"Received packet from {addr}")
+        process_packet(data.decode('utf-8'))
 
 # Mulai menerima dan memproses paket UDP
 udp_receiver()

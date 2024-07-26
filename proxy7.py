@@ -1,7 +1,6 @@
 from scapy.all import sniff, send, IP, TCP, UDP
 import socket
 import time
-import statistics
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -151,6 +150,9 @@ def forward_packet(packet):
         if original_ip.src == PROXY_IP or original_ip.dst == PROXY_IP:
             print(f"Skipping packet to/from proxy itself: {original_ip.src} -> {original_ip.dst}")
             return
+
+        # Log informasi paket yang diterima
+        print(f"Received packet: {original_ip.src} -> {original_ip.dst}")
 
         # Forward only valid TCP and UDP packets
         if packet.haslayer(TCP) or packet.haslayer(UDP):

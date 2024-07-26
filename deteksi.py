@@ -60,101 +60,111 @@ def send_telegram_message(message):
 
 # Function to process packets
 def process_packet(packet):
+    print("Processing packet...")
     if packet.haslayer(IP):
+        print("Packet has IP layer...")
         packet_info = {
             "Protocol": 1 if packet.haslayer(UDP) else 2 if packet.haslayer(TCP) else 0,
             "Packet length": len(packet),
-            "Flow Duration": 0,  # Placeholder
-            "Total Fwd Packets": 0,  # Placeholder
-            "Total Backward Packets": 0,  # Placeholder
-            "Fwd Packets Length Total": 0,  # Placeholder
-            "Bwd Packets Length Total": 0,  # Placeholder
-            "Fwd Packet Length Max": 0,  # Placeholder
-            "Fwd Packet Length Min": 0,  # Placeholder
-            "Fwd Packet Length Mean": 0,  # Placeholder
-            "Fwd Packet Length Std": 0,  # Placeholder
-            "Bwd Packet Length Max": 0,  # Placeholder
-            "Bwd Packet Length Min": 0,  # Placeholder
-            "Bwd Packet Length Mean": 0,  # Placeholder
-            "Bwd Packet Length Std": 0,  # Placeholder
-            "Flow Bytes/s": 0,  # Placeholder
-            "Flow Packets/s": 0,  # Placeholder
-            "Flow IAT Mean": 0,  # Placeholder
-            "Flow IAT Std": 0,  # Placeholder
-            "Flow IAT Max": 0,  # Placeholder
-            "Flow IAT Min": 0,  # Placeholder
-            "Fwd IAT Total": 0,  # Placeholder
-            "Fwd IAT Mean": 0,  # Placeholder
-            "Fwd IAT Std": 0,  # Placeholder
-            "Fwd IAT Max": 0,  # Placeholder
-            "Fwd IAT Min": 0,  # Placeholder
-            "Bwd IAT Total": 0,  # Placeholder
-            "Bwd IAT Mean": 0,  # Placeholder
-            "Bwd IAT Std": 0,  # Placeholder
-            "Bwd IAT Max": 0,  # Placeholder
-            "Bwd IAT Min": 0,  # Placeholder
-            "Fwd PSH Flags": 0,  # Placeholder
-            "Bwd PSH Flags": 0,  # Placeholder
-            "Fwd URG Flags": 0,  # Placeholder
-            "BWD URG Flags": 0,  # Placeholder
-            "Fwd Header Length": 0,  # Placeholder
-            "Bwd Header Length": 0,  # Placeholder
-            "Fwd Packets/s": 0,  # Placeholder
-            "Bwd Packets/s": 0,  # Placeholder
-            "Packet Length Min": 0,  # Placeholder
-            "Packet Length Max": 0,  # Placeholder
-            "Packet Length Mean": 0,  # Placeholder
-            "Packet Length Std": 0,  # Placeholder
-            "Packet Length Variance": 0,  # Placeholder
-            "FIN Flag Count": 0,  # Placeholder
-            "SYN Flag Count": 0,  # Placeholder
-            "RST Flag Count": 0,  # Placeholder
-            "PSH Flag Count": 0,  # Placeholder
-            "ACK Flag Count": 0,  # Placeholder
-            "URG Flag Count": 0,  # Placeholder
-            "CWE Flag Count": 0,  # Placeholder
-            "ECE Flag Count": 0,  # Placeholder
-            "Down/Up Ratio": 0,  # Placeholder
-            "Avg Packet Size": 0,  # Placeholder
-            "Avg Fwd Segment Size": 0,  # Placeholder
-            "Avg Bwd Segment Size": 0,  # Placeholder
-            "Fwd Avg Bytes/Bulk": 0,  # Placeholder
-            "Fwd Avg Packets/Bulk": 0,  # Placeholder
-            "Fwd Avg Bulk Rate": 0,  # Placeholder
-            "Bwd Avg Bytes/Bulk": 0,  # Placeholder
-            "Bwd Avg Packets/Bulk": 0,  # Placeholder
-            "Bwd Avg Bulk Rate": 0,  # Placeholder
-            "Subflow Fwd Packets": 0,  # Placeholder
-            "Subflow Fwd Bytes": 0,  # Placeholder
-            "Subflow Bwd Packets": 0,  # Placeholder
-            "Subflow Bwd Bytes": 0,  # Placeholder
-            "Init Fwd Win Bytes": 0,  # Placeholder
-            "Init Bwd Win Bytes": 0,  # Placeholder
-            "Fwd Act Data Packets": 0,  # Placeholder
-            "Fwd Seg Size Min": 0,  # Placeholder
-            "Active Mean": 0,  # Placeholder
-            "Active Std": 0,  # Placeholder
-            "Active Max": 0,  # Placeholder
-            "Active Min": 0,  # Placeholder
-            "Idle Mean": 0,  # Placeholder
-            "Idle Std": 0,  # Placeholder
-            "Idle Max": 0,  # Placeholder
-            "Idle Min": 0   # Placeholder
+            "Flow Duration": packet.time,  # Misalnya menggunakan timestamp dari Scapy
+            "Total Fwd Packets": 1,
+            "Total Backward Packets": 0,
+            "Fwd Packets Length Total": len(packet),
+            "Bwd Packets Length Total": 0,
+            "Fwd Packet Length Max": len(packet),
+            "Fwd Packet Length Min": len(packet),
+            "Fwd Packet Length Mean": len(packet),
+            "Fwd Packet Length Std": 0,
+            "Bwd Packet Length Max": 0,
+            "Bwd Packet Length Min": 0,
+            "Bwd Packet Length Mean": 0,
+            "Bwd Packet Length Std": 0,
+            "Flow Bytes/s": len(packet) / packet.time,
+            "Flow Packets/s": 1 / packet.time,
+            "Flow IAT Mean": 0,
+            "Flow IAT Std": 0,
+            "Flow IAT Max": 0,
+            "Flow IAT Min": 0,
+            "Fwd IAT Total": 0,
+            "Fwd IAT Mean": 0,
+            "Fwd IAT Std": 0,
+            "Fwd IAT Max": 0,
+            "Fwd IAT Min": 0,
+            "Bwd IAT Total": 0,
+            "Bwd IAT Mean": 0,
+            "Bwd IAT Std": 0,
+            "Bwd IAT Max": 0,
+            "Bwd IAT Min": 0,
+            "Fwd PSH Flags": 0,
+            "Bwd PSH Flags": 0,
+            "Fwd URG Flags": 0,
+            "BWD URG Flags": 0,
+            "Fwd Header Length": packet[IP].ihl * 4,
+            "Bwd Header Length": 0,
+            "Fwd Packets/s": 1 / packet.time,
+            "Bwd Packets/s": 0,
+            "Packet Length Min": len(packet),
+            "Packet Length Max": len(packet),
+            "Packet Length Mean": len(packet),
+            "Packet Length Std": 0,
+            "Packet Length Variance": 0,
+            "FIN Flag Count": 0,
+            "SYN Flag Count": 1 if packet.haslayer(TCP) and packet[TCP].flags & 0x02 else 0,
+            "RST Flag Count": 0,
+            "PSH Flag Count": 1 if packet.haslayer(TCP) and packet[TCP].flags & 0x08 else 0,
+            "ACK Flag Count": 1 if packet.haslayer(TCP) and packet[TCP].flags & 0x10 else 0,
+            "URG Flag Count": 1 if packet.haslayer(TCP) and packet[TCP].flags & 0x20 else 0,
+            "CWE Flag Count": 0,
+            "ECE Flag Count": 0,
+            "Down/Up Ratio": 0,
+            "Avg Packet Size": len(packet),
+            "Avg Fwd Segment Size": len(packet),
+            "Avg Bwd Segment Size": 0,
+            "Fwd Avg Bytes/Bulk": 0,
+            "Fwd Avg Packets/Bulk": 0,
+            "Fwd Avg Bulk Rate": 0,
+            "Bwd Avg Bytes/Bulk": 0,
+            "Bwd Avg Packets/Bulk": 0,
+            "Bwd Avg Bulk Rate": 0,
+            "Subflow Fwd Packets": 1,
+            "Subflow Fwd Bytes": len(packet),
+            "Subflow Bwd Packets": 0,
+            "Subflow Bwd Bytes": 0,
+            "Init Fwd Win Bytes": packet[TCP].window if packet.haslayer(TCP) else 0,
+            "Init Bwd Win Bytes": 0,
+            "Fwd Act Data Packets": 0,
+            "Fwd Seg Size Min": len(packet),
+            "Active Mean": packet.time,
+            "Active Std": 0,
+            "Active Max": packet.time,
+            "Active Min": packet.time,
+            "Idle Mean": 0,
+            "Idle Std": 0,
+            "Idle Max": 0,
+            "Idle Min": 0
         }
 
-        # Convert packet_info to dataframe
+        print(f"Packet info: {packet_info}")
         packet_df = pd.DataFrame([packet_info], columns=feature_names)
 
-        # Scale and transform the data
-        packet_scaled = scaler.transform(packet_df)
-        packet_pca = pca.transform(packet_scaled)
+        try:
+            packet_scaled = scaler.transform(packet_df)
+            packet_pca = pca.transform(packet_scaled)
+        except Exception as e:
+            print(f"Error in data transformation: {e}")
+            return
 
-        # Predict with the model
-        prediction = model.predict(packet_pca)
+        try:
+            prediction = model.predict(packet_pca)
+        except Exception as e:
+            print(f"Error in prediction: {e}")
+            return
 
         if prediction[0] == 1:
             print(f"Detected DDoS attack from {packet[IP].src}")
             send_telegram_message(f"Detected DDoS attack from {packet[IP].src}")
+        else:
+            print("No DDoS detected.")
 
 while True:
     data, addr = sock.recvfrom(1024)

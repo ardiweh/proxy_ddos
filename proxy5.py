@@ -42,10 +42,12 @@ def forward_packet(packet):
         
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
+            print(f"Skipping multicast/broadcast packet: {original_ip.dst}")
             return
 
         # Cek apakah paket sudah sampai ke tujuan akhir (SERVER_IP) atau berasal dari proxy itu sendiri
         if original_ip.src == PROXY_IP or original_ip.dst == PROXY_IP:
+            print(f"Skipping packet to/from proxy itself: {original_ip.src} -> {original_ip.dst}")
             return
 
         packet_info = {
@@ -82,6 +84,7 @@ def forward_packet(packet):
             original_tcp = packet[TCP]
 
             if original_tcp.dport not in TARGET_PORT:
+                print(f"Skipping packet with dport not in TARGET_PORT: {original_tcp.dport}")
                 return
 
             packet_info["Protocol"] = "TCP"
@@ -107,6 +110,7 @@ def forward_packet(packet):
             original_udp = packet[UDP]
 
             if original_udp.dport not in TARGET_PORT:
+                print(f"Skipping packet with dport not in TARGET_PORT: {original_udp.dport}")
                 return
             
             packet_info["Protocol"] = "UDP"

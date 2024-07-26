@@ -92,7 +92,7 @@ def forward_packet(packet):
             packet_info["CWE Flag"] = original_tcp.flags & 0x40
             packet_info["ECE Flag"] = original_tcp.flags & 0x80
 
-            new_packet = IP(src=original_ip.src, dst=original_ip.dst) / TCP(
+            new_packet = IP(src=original_ip.src, dst=SERVER_IP) / TCP(
                 sport=original_tcp.sport, dport=original_tcp.dport, flags=original_tcp.flags,
                 seq=original_tcp.seq, ack=original_tcp.ack, dataofs=original_tcp.dataofs, reserved=original_tcp.reserved,
                 window=original_tcp.window, chksum=original_tcp.chksum, urgptr=original_tcp.urgptr, options=original_tcp.options
@@ -106,7 +106,7 @@ def forward_packet(packet):
             
             packet_info["Protocol"] = "UDP"
             
-            new_packet = IP(src=original_ip.src, dst=original_ip.dst) / UDP(
+            new_packet = IP(src=original_ip.src, dst=SERVER_IP) / UDP(
                 sport=original_udp.sport, dport=original_udp.dport, len=original_udp.len, chksum=original_udp.chksum
             ) / original_udp.payload
 

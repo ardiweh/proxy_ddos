@@ -21,9 +21,9 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server
-SERVER_IP = '192.168.1.29'  # Alamat IP server yang menjalankan kode server
+SERVER_IP = '192.168.1.9'  # Alamat IP server yang menjalankan kode server
 SERVER_PORT = 12345         # Port yang digunakan server untuk menerima paket
-PROXY_IP = '192.168.1.26'   # Alamat IP dari proxy itu sendiri
+PROXY_IP = '192.168.1.10'   # Alamat IP dari proxy itu sendiri
 CAPTURED_PACKET_DIR = "./log"
 
 captured_data = []

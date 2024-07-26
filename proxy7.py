@@ -1,6 +1,7 @@
 from scapy.all import sniff, send, IP, TCP, UDP
 import socket
 import time
+import json
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -30,10 +31,10 @@ def is_multicast_or_broadcast(ip):
 def forward_packet_to_server(metadata):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(bytes(str(metadata), 'utf-8'), (SERVER_IP, SERVER_PORT))
-        print(f"Metadata sent to server: {metadata}")
+        sock.sendto(json.dumps(metadata).encode('utf-8'), (SERVER_IP, SERVER_PORT))
+        print(f"[INFO] Metadata sent to server: {json.dumps(metadata)}")
     except Exception as e:
-        print(f"Error sending metadata to server: {e}")
+        print(f"[ERROR] Error sending metadata to server: {e}")
 
 def extract_metadata(packet):
     metadata = {
@@ -143,25 +144,25 @@ def forward_packet(packet):
         
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
-            print(f"Skipping multicast/broadcast packet: {original_ip.dst}")
+            print(f"[INFO] Skipping multicast/broadcast packet: {original_ip.dst}")
             return
 
         # Cek apakah paket berasal dari atau menuju proxy itu sendiri
         if original_ip.src == PROXY_IP or original_ip.dst == PROXY_IP:
-            print(f"Skipping packet to/from proxy itself: {original_ip.src} -> {original_ip.dst}")
+            print(f"[INFO] Skipping packet to/from proxy itself: {original_ip.src} -> {original_ip.dst}")
             return
 
         # Log informasi paket yang diterima
-        print(f"Received packet: {original_ip.src} -> {original_ip.dst}")
+        print(f"[INFO] Received packet: {original_ip.src} -> {original_ip.dst}")
 
         # Forward only valid TCP and UDP packets
         if packet.haslayer(TCP) or packet.haslayer(UDP):
             try:
                 metadata = extract_metadata(packet)
                 forward_packet_to_server(metadata)
-                print(f"Forwarded {packet.summary()} from {original_ip.src} to {SERVER_IP}:{SERVER_PORT}")
+                print(f"[INFO] Forwarded {packet.summary()} from {original_ip.src} to {SERVER_IP}:{SERVER_PORT}")
             except Exception as e:
-                print(f"Error forwarding packet to server: {e}")
+                print(f"[ERROR] Error forwarding packet to server: {e}")
 
 # Mulai menangkap dan meneruskan paket
 sniff(filter="tcp or udp", prn=forward_packet)

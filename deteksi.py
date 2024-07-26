@@ -54,7 +54,8 @@ def send_telegram_message(message):
         'text': message
     }
     try:
-        requests.post(url, data=payload)
+        response = requests.post(url, data=payload)
+        print(f"Telegram response: {response.status_code}, {response.text}")
     except Exception as e:
         print(f"Failed to send message to Telegram: {e}")
 
@@ -150,12 +151,14 @@ def process_packet(packet):
         try:
             packet_scaled = scaler.transform(packet_df)
             packet_pca = pca.transform(packet_scaled)
+            print("Data transformed successfully.")
         except Exception as e:
             print(f"Error in data transformation: {e}")
             return
 
         try:
             prediction = model.predict(packet_pca)
+            print(f"Prediction: {prediction}")
         except Exception as e:
             print(f"Error in prediction: {e}")
             return
@@ -170,6 +173,7 @@ def process_packet(packet):
 def udp_receiver():
     while True:
         data, addr = sock.recvfrom(65535)
+        print(f"Received packet from {addr}")
         packet = IP(data)
         process_packet(packet)
 

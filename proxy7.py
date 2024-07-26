@@ -1,6 +1,5 @@
 from scapy.all import sniff, send, IP, TCP, UDP
 import socket
-import time
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {

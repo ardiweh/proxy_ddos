@@ -1,4 +1,4 @@
-from scapy.all import sniff, send, IP, TCP, UDP
+from scapy.all import sniff, IP, TCP, UDP
 import socket
 import time
 import json
@@ -38,7 +38,7 @@ def forward_packet_to_server(metadata):
 
 def extract_metadata(packet):
     metadata = {
-        "Protocol": None,
+        "Protocol": 1 if packet.haslayer(UDP) else 2 if packet.haslayer(TCP) else 0,
         "Flow Duration": packet.time,
         "Total Fwd Packets": 1,
         "Total Backward Packets": 0,
@@ -119,7 +119,6 @@ def extract_metadata(packet):
 
     if packet.haslayer(TCP):
         tcp_layer = packet[TCP]
-        metadata["Protocol"] = "TCP"
         metadata["Fwd PSH Flags"] = tcp_layer.flags & 0x08
         metadata["Fwd URG Flags"] = tcp_layer.flags & 0x20
         metadata["Fwd Header Length"] = tcp_layer.dataofs * 4
@@ -131,10 +130,6 @@ def extract_metadata(packet):
         metadata["URG Flag Count"] = tcp_layer.flags & 0x20
         metadata["CWE Flag Count"] = tcp_layer.flags & 0x40
         metadata["ECE Flag Count"] = tcp_layer.flags & 0x80
-
-    elif packet.haslayer(UDP):
-        udp_layer = packet[UDP]
-        metadata["Protocol"] = "UDP"
 
     return metadata
 

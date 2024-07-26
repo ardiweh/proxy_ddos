@@ -74,18 +74,15 @@ def process_packet(packet):
     packet_df = pd.DataFrame([packet_info], columns=feature_names)
 
     try:
+        start_time = time.time()
         packet_scaled = scaler.transform(packet_df)
         packet_pca = pca.transform(packet_scaled)
-        print("Data transformed successfully.")
-    except Exception as e:
-        print(f"Error in data transformation: {e}")
-        return
-
-    try:
         prediction = model.predict(packet_pca)
+        end_time = time.time()
+        print(f"Data transformed and prediction made in {end_time - start_time:.4f} seconds.")
         print(f"Prediction: {prediction}")
     except Exception as e:
-        print(f"Error in prediction: {e}")
+        print(f"Error in data transformation or prediction: {e}")
         return
 
     if prediction[0] == 1:

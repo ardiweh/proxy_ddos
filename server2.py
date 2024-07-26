@@ -2,6 +2,7 @@ import socket
 import joblib
 import pandas as pd
 import numpy as np
+from scapy.all import IP, UDP, TCP
 import requests
 from datetime import datetime
 import json
@@ -33,7 +34,7 @@ feature_names = [
     "Flow IAT Std", "Flow IAT Max", "Flow IAT Min", "Fwd IAT Total", "Fwd IAT Mean",
     "Fwd IAT Std", "Fwd IAT Max", "Fwd IAT Min", "Bwd IAT Total", "Bwd IAT Mean",
     "Bwd IAT Std", "Bwd IAT Max", "Bwd IAT Min", "Fwd PSH Flags", "Bwd PSH Flags",
-    "Fwd URG Flags", "BWD URG Flags", "Fwd Header Length", "Bwd Header Length",
+    "Fwd URG Flags", "Bwd URG Flags", "Fwd Header Length", "Bwd Header Length",
     "Fwd Packets/s", "Bwd Packets/s", "Packet Length Min", "Packet Length Max",
     "Packet Length Mean", "Packet Length Std", "Packet Length Variance",
     "FIN Flag Count", "SYN Flag Count", "RST Flag Count", "PSH Flag Count",
@@ -61,10 +62,15 @@ def send_telegram_message(message):
         print(f"Failed to send message to Telegram: {e}")
 
 # Function to process packets
-def process_packet(data):
-    packet_info = json.loads(data.decode('utf-8'))
-    print(f"Packet info: {packet_info}")
+def process_packet(packet):
+    print("Processing packet...")
+    packet_info = json.loads(packet.decode('utf-8'))
 
+    # Convert 'Protocol' field to numeric value
+    protocol_map = {"UDP": 1, "TCP": 2}
+    packet_info["Protocol"] = protocol_map.get(packet_info["Protocol"], 0)
+
+    print(f"Packet info: {packet_info}")
     packet_df = pd.DataFrame([packet_info], columns=feature_names)
 
     try:
@@ -91,7 +97,7 @@ def process_packet(data):
     else:
         print("No DDoS detected.")
 
-# Fungsi untuk menerima paket UDP dan memprosesnya
+# Fungsi untuk menerima paket UDP dan memprosesnya menggunakan Scapy
 def udp_receiver():
     while True:
         data, addr = sock.recvfrom(65535)

@@ -62,12 +62,11 @@ def send_telegram_message(message):
         print(f"Failed to send message to Telegram: {e}")
 
 # Function to process packets
-def process_packet(packet):
+def process_packet(packet_data):
     print("Processing packet...")
     try:
-        packet_info = json.loads(packet)
+        packet_info = json.loads(packet_data)
         print(f"Packet info: {packet_info}")
-        
         packet_df = pd.DataFrame([packet_info], columns=feature_names)
 
         try:
@@ -93,7 +92,7 @@ def process_packet(packet):
             send_telegram_message(message)
         else:
             print("No DDoS detected.")
-    except Exception as e:
+    except json.JSONDecodeError as e:
         print(f"Error decoding packet: {e}")
 
 # Fungsi untuk menerima paket UDP dan memprosesnya menggunakan Scapy

@@ -1,6 +1,7 @@
 from scapy.all import sniff, send, IP, TCP, UDP
 import socket
 import time
+import statistics
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -38,17 +39,17 @@ def forward_packet_to_server(metadata):
 def extract_metadata(packet):
     metadata = {
         "Protocol": None,
-        "Flow Duration": 0,
-        "Total Fwd Packets": 0,
+        "Flow Duration": packet.time,
+        "Total Fwd Packets": 1,
         "Total Backward Packets": 0,
-        "Fwd Packets Length Total": 0,
+        "Fwd Packets Length Total": len(packet),
         "Bwd Packets Length Total": 0,
-        "Fwd Packet Length Max": 0,
-        "Fwd Packet Length Min": float('inf'),
-        "Fwd Packet Length Mean": 0,
+        "Fwd Packet Length Max": len(packet),
+        "Fwd Packet Length Min": len(packet),
+        "Fwd Packet Length Mean": len(packet),
         "Fwd Packet Length Std": 0,
         "Bwd Packet Length Max": 0,
-        "Bwd Packet Length Min": float('inf'),
+        "Bwd Packet Length Min": 0,
         "Bwd Packet Length Mean": 0,
         "Bwd Packet Length Std": 0,
         "Flow Bytes/s": 0,
@@ -56,17 +57,17 @@ def extract_metadata(packet):
         "Flow IAT Mean": 0,
         "Flow IAT Std": 0,
         "Flow IAT Max": 0,
-        "Flow IAT Min": float('inf'),
+        "Flow IAT Min": 0,
         "Fwd IAT Total": 0,
         "Fwd IAT Mean": 0,
         "Fwd IAT Std": 0,
         "Fwd IAT Max": 0,
-        "Fwd IAT Min": float('inf'),
+        "Fwd IAT Min": 0,
         "Bwd IAT Total": 0,
         "Bwd IAT Mean": 0,
         "Bwd IAT Std": 0,
         "Bwd IAT Max": 0,
-        "Bwd IAT Min": float('inf'),
+        "Bwd IAT Min": 0,
         "Fwd PSH Flags": 0,
         "Bwd PSH Flags": 0,
         "Fwd URG Flags": 0,
@@ -75,9 +76,9 @@ def extract_metadata(packet):
         "Bwd Header Length": 0,
         "Fwd Packets/s": 0,
         "Bwd Packets/s": 0,
-        "Packet Length Min": float('inf'),
-        "Packet Length Max": 0,
-        "Packet Length Mean": 0,
+        "Packet Length Min": len(packet),
+        "Packet Length Max": len(packet),
+        "Packet Length Mean": len(packet),
         "Packet Length Std": 0,
         "Packet Length Variance": 0,
         "FIN Flag Count": 0,
@@ -89,8 +90,8 @@ def extract_metadata(packet):
         "CWE Flag Count": 0,
         "ECE Flag Count": 0,
         "Down/Up Ratio": 0,
-        "Avg Packet Size": 0,
-        "Avg Fwd Segment Size": 0,
+        "Avg Packet Size": len(packet),
+        "Avg Fwd Segment Size": len(packet),
         "Avg Bwd Segment Size": 0,
         "Fwd Avg Bytes/Bulk": 0,
         "Fwd Avg Packets/Bulk": 0,
@@ -98,50 +99,34 @@ def extract_metadata(packet):
         "Bwd Avg Bytes/Bulk": 0,
         "Bwd Avg Packets/Bulk": 0,
         "Bwd Avg Bulk Rate": 0,
-        "Subflow Fwd Packets": 0,
-        "Subflow Fwd Bytes": 0,
+        "Subflow Fwd Packets": 1,
+        "Subflow Fwd Bytes": len(packet),
         "Subflow Bwd Packets": 0,
         "Subflow Bwd Bytes": 0,
         "Init Fwd Win Bytes": 0,
         "Init Bwd Win Bytes": 0,
         "Fwd Act Data Packets": 0,
-        "Fwd Seg Size Min": float('inf'),
-        "Active Mean": 0,
+        "Fwd Seg Size Min": len(packet),
+        "Active Mean": packet.time,
         "Active Std": 0,
-        "Active Max": 0,
-        "Active Min": float('inf'),
+        "Active Max": packet.time,
+        "Active Min": packet.time,
         "Idle Mean": 0,
         "Idle Std": 0,
         "Idle Max": 0,
-        "Idle Min": float('inf')
+        "Idle Min": 0
     }
 
-    if packet.haslayer(IP):
-        ip_layer = packet[IP]
-        metadata["Flow Duration"] = packet.time
-        
-        if packet.haslayer(TCP):
-            tcp_layer = packet[TCP]
-            metadata["Protocol"] = "TCP"
-            metadata["Total Fwd Packets"] += 1
-            metadata["Fwd Packets Length Total"] += len(tcp_layer)
-            metadata["Fwd Packet Length Max"] = max(metadata["Fwd Packet Length Max"], len(tcp_layer))
-            metadata["Fwd Packet Length Min"] = min(metadata["Fwd Packet Length Min"], len(tcp_layer))
-            metadata["Fwd Packet Length Mean"] = (metadata["Fwd Packet Length Mean"] + len(tcp_layer)) / 2
-            metadata["Fwd Header Length"] = tcp_layer.dataofs * 4
-            
-        elif packet.haslayer(UDP):
-            udp_layer = packet[UDP]
-            metadata["Protocol"] = "UDP"
-            metadata["Total Fwd Packets"] += 1
-            metadata["Fwd Packets Length Total"] += len(udp_layer)
-            metadata["Fwd Packet Length Max"] = max(metadata["Fwd Packet Length Max"], len(udp_layer))
-            metadata["Fwd Packet Length Min"] = min(metadata["Fwd Packet Length Min"], len(udp_layer))
-            metadata["Fwd Packet Length Mean"] = (metadata["Fwd Packet Length Mean"] + len(udp_layer)) / 2
+    if packet.haslayer(TCP):
+        tcp_layer = packet[TCP]
+        metadata["Protocol"] = "TCP"
+        metadata["Fwd PSH Flags"] = tcp_layer.flags & 0x08
+        metadata["Fwd URG Flags"] = tcp_layer.flags & 0x20
+        metadata["Fwd Header Length"] = tcp_layer.dataofs * 4
 
-        metadata["Packet Length Max"] = max(metadata["Packet Length Max"], len(ip_layer))
-        metadata["Packet Length Min"] = min(metadata["Packet Length Min"], len(ip_layer))
-        metadata["Packet Length Mean"] = (metadata["Packet Length Mean"] + len(ip_layer)) / 2
+    elif packet.haslayer(UDP):
+        udp_layer = packet[UDP]
+        metadata["Protocol"] = "UDP"
 
     return metadata
 

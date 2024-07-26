@@ -1,4 +1,4 @@
-from scapy.all import sniff, send, IP, TCP, UDP
+from scapy.all import sniff, IP, TCP, UDP
 import socket
 import time
 import json
@@ -32,7 +32,7 @@ def forward_packet_to_server(metadata):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.sendto(json.dumps(metadata).encode('utf-8'), (SERVER_IP, SERVER_PORT))
-        print(f"[INFO] Metadata sent to server: {json.dumps(metadata)}")
+        print(f"[INFO] Metadata sent to server: {metadata}")
     except Exception as e:
         print(f"[ERROR] Error sending metadata to server: {e}")
 

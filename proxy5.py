@@ -21,6 +21,7 @@ TARGET_PORT = {
 
 # Definisi alamat IP server
 SERVER_IP = '192.168.1.29'  # Alamat IP server yang menjalankan kode server
+PROXY_IP = '192.168.1.26'   # Alamat IP dari proxy itu sendiri
 CAPTURED_PACKET_DIR = "./log"
 
 captured_data = []
@@ -41,6 +42,10 @@ def forward_packet(packet):
         
         # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
+            return
+
+        # Cek apakah paket sudah sampai ke tujuan akhir (SERVER_IP) atau berasal dari proxy itu sendiri
+        if original_ip.src == PROXY_IP or original_ip.dst == PROXY_IP:
             return
 
         packet_info = {
@@ -117,15 +122,11 @@ def forward_packet(packet):
                 packet_count += 1
 
         if new_packet:
-            # Cek apakah new_packet tidak mengarah ke IP asli untuk menghindari looping
-            if new_packet[IP].dst != original_ip.src:
-                try:
-                    send(new_packet, verbose=False)
-                    print(f"Forwarded {packet.summary()} from {original_ip.src}:{original_tcp.sport if packet.haslayer(TCP) else original_udp.sport} to {new_packet[IP].dst}:{new_packet[TCP].dport if packet.haslayer(TCP) else new_packet[UDP].dport}")
-                except Exception as e:
-                    print(f"Error forwarding packet: {e}")
-            else:
-                print("Detected potential loop, packet not forwarded.")
+            try:
+                send(new_packet, verbose=False)
+                print(f"Forwarded {packet.summary()} from {original_ip.src}:{original_tcp.sport if packet.haslayer(TCP) else original_udp.sport} to {new_packet[IP].dst}:{new_packet[TCP].dport if packet.haslayer(TCP) else new_packet[UDP].dport}")
+            except Exception as e:
+                print(f"Error forwarding packet: {e}")
 
 def write_logs():
     global captured_data, packet_count, cap_increment

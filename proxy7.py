@@ -21,9 +21,9 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server
-SERVER_IP = '192.168.1.9'  # Alamat IP server yang menjalankan kode server
+SERVER_IP = '192.168.1.29'  # Alamat IP server yang menjalankan kode server
 SERVER_PORT = 12345         # Port yang digunakan server untuk menerima paket
-PROXY_IP = '192.168.1.10'   # Alamat IP dari proxy itu sendiri
+PROXY_IP = '192.168.1.26'   # Alamat IP dari proxy itu sendiri
 CAPTURED_PACKET_DIR = "./log"
 
 captured_data = []
@@ -37,8 +37,12 @@ def is_multicast_or_broadcast(ip):
 
 # Fungsi untuk meneruskan paket ke server
 def forward_packet_to_server(packet):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.sendto(bytes(packet), (SERVER_IP, SERVER_PORT))
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(bytes(packet), (SERVER_IP, SERVER_PORT))
+        print(f"Packet sent to server: {packet.summary()}")
+    except Exception as e:
+        print(f"Error sending packet to server: {e}")
 
 def forward_packet(packet):
     global captured_data, packet_count, cap_increment

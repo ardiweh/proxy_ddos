@@ -2,7 +2,6 @@ import socket
 import joblib
 import pandas as pd
 import numpy as np
-from scapy.all import IP, UDP, TCP
 import requests
 from datetime import datetime
 import json

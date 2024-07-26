@@ -20,7 +20,7 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server
-SERVER_IP = '192.168.1.8'
+SERVER_IP = '192.168.1.29'  # Alamat IP server yang menjalankan kode server
 CAPTURED_PACKET_DIR = "./log"
 
 captured_data = []

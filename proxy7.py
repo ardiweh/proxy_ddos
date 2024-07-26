@@ -1,7 +1,6 @@
 from scapy.all import sniff, send, IP, TCP, UDP
 import socket
 import time
-import statistics
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -123,6 +122,14 @@ def extract_metadata(packet):
         metadata["Fwd PSH Flags"] = tcp_layer.flags & 0x08
         metadata["Fwd URG Flags"] = tcp_layer.flags & 0x20
         metadata["Fwd Header Length"] = tcp_layer.dataofs * 4
+        metadata["FIN Flag Count"] = tcp_layer.flags & 0x01
+        metadata["SYN Flag Count"] = tcp_layer.flags & 0x02
+        metadata["RST Flag Count"] = tcp_layer.flags & 0x04
+        metadata["PSH Flag Count"] = tcp_layer.flags & 0x08
+        metadata["ACK Flag Count"] = tcp_layer.flags & 0x10
+        metadata["URG Flag Count"] = tcp_layer.flags & 0x20
+        metadata["CWE Flag Count"] = tcp_layer.flags & 0x40
+        metadata["ECE Flag Count"] = tcp_layer.flags & 0x80
 
     elif packet.haslayer(UDP):
         udp_layer = packet[UDP]

@@ -2,7 +2,7 @@ import socket
 import joblib
 import pandas as pd
 import numpy as np
-from scapy.all import sniff, IP, UDP, TCP
+from scapy.all import IP, UDP, TCP
 import requests
 
 # Load the trained model, PCA, and scaler
@@ -166,7 +166,12 @@ def process_packet(packet):
         else:
             print("No DDoS detected.")
 
-while True:
-    data, addr = sock.recvfrom(1024)
-    packet = sniff(count=1)
-    process_packet(packet[0])
+# Fungsi untuk menerima paket UDP dan memprosesnya menggunakan Scapy
+def udp_receiver():
+    while True:
+        data, addr = sock.recvfrom(65535)
+        packet = IP(data)
+        process_packet(packet)
+
+# Mulai menerima dan memproses paket UDP
+udp_receiver()

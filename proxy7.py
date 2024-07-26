@@ -48,25 +48,13 @@ def forward_packet(packet):
             print(f"Skipping packet to/from proxy itself: {original_ip.src} -> {original_ip.dst}")
             return
 
-        if packet.haslayer(TCP):
-            original_tcp = packet[TCP]
-            if original_tcp.dport not in TARGET_PORT:
-                print(f"Skipping packet with dport not in TARGET_PORT: {original_tcp.dport}")
-                return
-            print(f"Forwarding TCP packet from {original_ip.src}:{original_tcp.sport} to {original_ip.dst}:{original_tcp.dport}")
-
-        elif packet.haslayer(UDP):
-            original_udp = packet[UDP]
-            if original_udp.dport not in TARGET_PORT:
-                print(f"Skipping packet with dport not in TARGET_PORT: {original_udp.dport}")
-                return
-            print(f"Forwarding UDP packet from {original_ip.src}:{original_udp.sport} to {original_ip.dst}:{original_udp.dport}")
-
-        try:
-            forward_packet_to_server(packet)
-            print(f"Forwarded {packet.summary()} from {original_ip.src} to {SERVER_IP}:{SERVER_PORT}")
-        except Exception as e:
-            print(f"Error forwarding packet to server: {e}")
+        # Forward only valid TCP and UDP packets
+        if packet.haslayer(TCP) or packet.haslayer(UDP):
+            try:
+                forward_packet_to_server(packet)
+                print(f"Forwarded {packet.summary()} from {original_ip.src} to {SERVER_IP}:{SERVER_PORT}")
+            except Exception as e:
+                print(f"Error forwarding packet to server: {e}")
 
 # Mulai menangkap dan meneruskan paket
 sniff(filter="tcp or udp", prn=forward_packet)

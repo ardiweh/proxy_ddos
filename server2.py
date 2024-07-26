@@ -2,10 +2,10 @@ import socket
 import joblib
 import pandas as pd
 import numpy as np
-from scapy.all import IP, UDP, TCP
 import requests
 from datetime import datetime
 import json
+import time
 
 # Load the trained model, PCA, and scaler
 model = joblib.load('best_random_forest_model.pkl')
@@ -64,7 +64,11 @@ def send_telegram_message(message):
 # Function to process packets
 def process_packet(packet):
     print("Processing packet...")
-    packet_info = json.loads(packet.decode('utf-8'))
+    try:
+        packet_info = json.loads(packet.decode('utf-8'))
+    except Exception as e:
+        print(f"Error decoding packet: {e}")
+        return
 
     # Convert 'Protocol' field to numeric value
     protocol_map = {"UDP": 1, "TCP": 2}
@@ -97,9 +101,12 @@ def process_packet(packet):
 # Fungsi untuk menerima paket UDP dan memprosesnya menggunakan Scapy
 def udp_receiver():
     while True:
-        data, addr = sock.recvfrom(65535)
-        print(f"Received packet from {addr}")
-        process_packet(data)
+        try:
+            data, addr = sock.recvfrom(65535)
+            print(f"Received packet from {addr}")
+            process_packet(data)
+        except Exception as e:
+            print(f"Error receiving packet: {e}")
 
 # Mulai menerima dan memproses paket UDP
 udp_receiver()

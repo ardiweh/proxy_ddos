@@ -1,39 +1,16 @@
 from scapy.all import sniff, IP, TCP, UDP
-import socket
-import time
-import json
-import pickle
+import joblib
 import numpy as np
 import requests
 from datetime import datetime
 
-# Definisi port yang diinginkan untuk forwarding
-TARGET_PORT = {
-    80,   # HTTP
-    443,  # HTTPS
-    53,   # DNS
-    22,   # SSH
-    21,   # FTP
-    25,   # SMTP
-    123,  # NTP
-    389,  # LDAP
-    1900, # SSDP
-    1433, # MSSQL
-    3389  # RDP
-}
+# Definisi alamat IP proxy
+PROXY_IP = '192.168.1.18'  # Alamat IP dari proxy itu sendiri
 
-# Definisi alamat IP server dan proxy
-SERVER_IP = '192.168.1.249'  # Alamat IP server yang menjalankan kode server
-SERVER_PORT = 12345          # Port yang digunakan server untuk menerima paket
-PROXY_IP = '192.168.1.18'    # Alamat IP dari proxy itu sendiri
-
-# Load the model, scaler, and PCA
-with open('best_random_forest_model.pkl', 'rb') as model_file:
-    model = pickle.load(model_file)
-with open('scaler.pkl', 'rb') as scaler_file:
-    scaler = pickle.load(scaler_file)
-with open('pca.pkl', 'rb') as pca_file:
-    pca = pickle.load(pca_file)
+# Load the model, scaler, and PCA using joblib
+model = joblib.load('best_random_forest_model.pkl')
+scaler = joblib.load('scaler.pkl')
+pca = joblib.load('pca.pkl')
 
 # Telegram bot configuration
 bot_token = '6863113423:AAHm97MiFDMfFPOg6mIcw_RLPmfk2zRF5xM'
@@ -56,15 +33,7 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Failed to send message to Telegram: {e}")
 
-# Fungsi untuk meneruskan paket ke server
-def forward_packet_to_server(metadata):
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(bytes(json.dumps(metadata), 'utf-8'), (SERVER_IP, SERVER_PORT))
-        print(f"[INFO] Metadata sent to server: {metadata}")
-    except Exception as e:
-        print(f"[ERROR] Error sending metadata to server: {e}")
-
+# Fungsi untuk mengekstraksi metadata dari paket
 def extract_metadata(packet):
     metadata = {
         "Protocol": 0,
@@ -166,22 +135,24 @@ def extract_metadata(packet):
 
     return metadata
 
+# Fungsi untuk memprediksi berdasarkan metadata paket
 def predict_packet(packet_metadata):
-    # Extract features and preprocess
+    # Ekstraksi fitur dan praproses
     feature_vector = np.array([packet_metadata[key] for key in sorted(packet_metadata.keys())])
     feature_vector = feature_vector.reshape(1, -1)
     scaled_features = scaler.transform(feature_vector)
     pca_features = pca.transform(scaled_features)
     
-    # Predict using the model
+    # Prediksi menggunakan model
     prediction = model.predict(pca_features)
     return prediction
 
+# Fungsi untuk menangani paket yang diterima
 def forward_packet(packet):
     if packet.haslayer(IP):
         original_ip = packet[IP]
         
-        # Tambahkan pengecekan apakah IP tujuan adalah multicast atau broadcast
+        # Pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
             print(f"[INFO] Skipping multicast/broadcast packet: {original_ip.dst}")
             return
@@ -194,7 +165,7 @@ def forward_packet(packet):
         # Log informasi paket yang diterima
         print(f"[INFO] Received packet: {original_ip.src} -> {original_ip.dst}")
 
-        # Forward only valid TCP and UDP packets
+        # Hanya memproses paket TCP dan UDP yang valid
         if packet.haslayer(TCP) or packet.haslayer(UDP):
             try:
                 metadata = extract_metadata(packet)
@@ -207,10 +178,8 @@ def forward_packet(packet):
                     print(message)
                     send_telegram_message(message)
                     
-                forward_packet_to_server(metadata)
-                print(f"[INFO] Forwarded {packet.summary()} from {original_ip.src} to {SERVER_IP}:{SERVER_PORT}")
             except Exception as e:
-                print(f"[ERROR] Error forwarding packet to server: {e}")
+                print(f"[ERROR] Error processing packet: {e}")
 
-# Mulai menangkap dan meneruskan paket
+# Mulai menangkap dan memproses paket
 sniff(filter="tcp or udp", prn=forward_packet)

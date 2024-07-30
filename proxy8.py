@@ -119,17 +119,17 @@ def extract_metadata(packet):
     if packet.haslayer(TCP):
         tcp_layer = packet[TCP]
         metadata["Protocol"] = 2
-        metadata["Fwd PSH Flags"] = int(tcp_layer.flags.PSH)
-        metadata["Fwd URG Flags"] = int(tcp_layer.flags.URG)
+        metadata["Fwd PSH Flags"] = int(tcp_layer.flags & 0x08 != 0)
+        metadata["Fwd URG Flags"] = int(tcp_layer.flags & 0x20 != 0)
         metadata["Fwd Header Length"] = tcp_layer.dataofs * 4
-        metadata["FIN Flag Count"] = int(tcp_layer.flags.FIN)
-        metadata["SYN Flag Count"] = int(tcp_layer.flags.SYN)
-        metadata["RST Flag Count"] = int(tcp_layer.flags.RST)
-        metadata["PSH Flag Count"] = int(tcp_layer.flags.PSH)
-        metadata["ACK Flag Count"] = int(tcp_layer.flags.ACK)
-        metadata["URG Flag Count"] = int(tcp_layer.flags.URG)
-        metadata["CWE Flag Count"] = int(tcp_layer.flags.CWR)
-        metadata["ECE Flag Count"] = int(tcp_layer.flags.ECE)
+        metadata["FIN Flag Count"] = int(tcp_layer.flags & 0x01 != 0)
+        metadata["SYN Flag Count"] = int(tcp_layer.flags & 0x02 != 0)
+        metadata["RST Flag Count"] = int(tcp_layer.flags & 0x04 != 0)
+        metadata["PSH Flag Count"] = int(tcp_layer.flags & 0x08 != 0)
+        metadata["ACK Flag Count"] = int(tcp_layer.flags & 0x10 != 0)
+        metadata["URG Flag Count"] = int(tcp_layer.flags & 0x20 != 0)
+        metadata["CWE Flag Count"] = int(tcp_layer.flags & 0x40 != 0)
+        metadata["ECE Flag Count"] = int(tcp_layer.flags & 0x80 != 0)
 
     elif packet.haslayer(UDP):
         metadata["Protocol"] = 1

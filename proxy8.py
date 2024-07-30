@@ -4,6 +4,8 @@ import time
 import json
 import pickle
 import numpy as np
+import requests
+from datetime import datetime
 
 # Definisi port yang diinginkan untuk forwarding
 TARGET_PORT = {
@@ -22,8 +24,8 @@ TARGET_PORT = {
 
 # Definisi alamat IP server dan proxy
 SERVER_IP = '192.168.1.249'  # Alamat IP server yang menjalankan kode server
-SERVER_PORT = 12345        # Port yang digunakan server untuk menerima paket
-PROXY_IP = '192.168.1.18'  # Alamat IP dari proxy itu sendiri
+SERVER_PORT = 12345          # Port yang digunakan server untuk menerima paket
+PROXY_IP = '192.168.1.18'    # Alamat IP dari proxy itu sendiri
 
 # Load the model, scaler, and PCA
 with open('best_random_forest_model.pkl', 'rb') as model_file:
@@ -33,9 +35,26 @@ with open('scaler.pkl', 'rb') as scaler_file:
 with open('pca.pkl', 'rb') as pca_file:
     pca = pickle.load(pca_file)
 
+# Telegram bot configuration
+bot_token = '6863113423:AAHm97MiFDMfFPOg6mIcw_RLPmfk2zRF5xM'
+bot_chatID = '6430179992'
+
 # Fungsi untuk memeriksa apakah IP adalah multicast atau broadcast
 def is_multicast_or_broadcast(ip):
     return ip.startswith('224.') or ip.startswith('239.') or ip == '255.255.255.255'
+
+# Fungsi untuk mengirim pesan ke Telegram
+def send_telegram_message(message):
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        'chat_id': bot_chatID,
+        'text': message
+    }
+    try:
+        response = requests.post(url, data=payload)
+        print(f"Telegram response: {response.status_code}, {response.text}")
+    except Exception as e:
+        print(f"Failed to send message to Telegram: {e}")
 
 # Fungsi untuk meneruskan paket ke server
 def forward_packet_to_server(metadata):
@@ -181,6 +200,13 @@ def forward_packet(packet):
                 metadata = extract_metadata(packet)
                 prediction = predict_packet(metadata)
                 print(f"[INFO] Prediction: {prediction[0]}")
+                
+                if prediction[0] == 1:
+                    current_time = datetime.now().strftime("%a %b %d %H:%M:%S %Y")
+                    message = f"Deteksi serangan DDoS terdeteksi pada {current_time}! Segera periksa sistem Anda."
+                    print(message)
+                    send_telegram_message(message)
+                    
                 forward_packet_to_server(metadata)
                 print(f"[INFO] Forwarded {packet.summary()} from {original_ip.src} to {SERVER_IP}:{SERVER_PORT}")
             except Exception as e:

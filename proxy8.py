@@ -21,9 +21,9 @@ TARGET_PORT = {
 }
 
 # Definisi alamat IP server dan proxy
-SERVER_IP = '192.168.1.9'  # Alamat IP server yang menjalankan kode server
+SERVER_IP = '192.168.1.249'  # Alamat IP server yang menjalankan kode server
 SERVER_PORT = 12345        # Port yang digunakan server untuk menerima paket
-PROXY_IP = '192.168.1.10'  # Alamat IP dari proxy itu sendiri
+PROXY_IP = '192.168.1.18'  # Alamat IP dari proxy itu sendiri
 
 # Load the model, scaler, and PCA
 with open('best_random_forest_model.pkl', 'rb') as model_file:

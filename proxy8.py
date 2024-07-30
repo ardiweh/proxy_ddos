@@ -1,6 +1,7 @@
 from scapy.all import sniff, IP, TCP, UDP
 import joblib
 import numpy as np
+import pandas as pd
 import requests
 from datetime import datetime
 
@@ -137,9 +138,8 @@ def extract_metadata(packet):
 
 # Fungsi untuk memprediksi berdasarkan metadata paket
 def predict_packet(packet_metadata):
-    # Ekstraksi fitur dan praproses
-    feature_vector = np.array([packet_metadata[key] for key in sorted(packet_metadata.keys())])
-    feature_vector = feature_vector.reshape(1, -1)
+    # Ekstraksi fitur dan praproses menggunakan DataFrame untuk mempertahankan nama fitur
+    feature_vector = pd.DataFrame([packet_metadata])
     scaled_features = scaler.transform(feature_vector)
     pca_features = pca.transform(scaled_features)
     
@@ -155,11 +155,6 @@ def forward_packet(packet):
         # Pengecekan apakah IP tujuan adalah multicast atau broadcast
         if is_multicast_or_broadcast(original_ip.dst):
             print(f"[INFO] Skipping multicast/broadcast packet: {original_ip.dst}")
-            return
-
-        # Cek apakah paket berasal dari atau menuju proxy itu sendiri
-        if original_ip.src == PROXY_IP or original_ip.dst == PROXY_IP:
-            print(f"[INFO] Skipping packet to/from proxy itself: {original_ip.src} -> {original_ip.dst}")
             return
 
         # Log informasi paket yang diterima

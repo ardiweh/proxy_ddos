@@ -15,8 +15,8 @@ scaler = joblib.load('scaler.pkl')
 pca = joblib.load('pca.pkl')
 
 # Telegram bot configuration
-bot_token = 'your_bot_token'
-bot_chatID = 'your_chat_id'
+bot_token = '6863113423:AAHm97MiFDMfFPOg6mIcw_RLPmfk2zRF5xM'
+bot_chatID = '6430179992'
 
 # Temporary log to store captured packet data
 captured_packets = []
